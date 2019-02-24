@@ -22,16 +22,20 @@ module Simpler
       require_routes
     end
 
-    def routes(&block)
-      @router.instance_eval(&block)
-    end
-
     def call(env)
       route = @router.route_for(env)
+      return page_not_found unless route
+      
+      env['simpler.params'] ||= {}
+      env['simpler.params'].merge!(route.params(env))
+      
       controller = route.controller.new(env)
       action = route.action
-
       make_response(controller, action)
+    end
+
+    def routes(&block)
+      @router.instance_eval(&block)
     end
 
     private
@@ -52,6 +56,10 @@ module Simpler
 
     def make_response(controller, action)
       controller.make_response(action)
+    end
+
+    def page_not_found
+      [404, {'Content-Type' => 'text/plain'}, ["404 Not Found\n"]]
     end
 
   end
