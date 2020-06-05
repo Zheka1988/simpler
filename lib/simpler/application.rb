@@ -27,14 +27,25 @@ module Simpler
     end
 
     def call(env)
+      # env['simpler.params'] ||= {}
       route = @router.route_for(env)
-      controller = route.controller.new(env)
-      action = route.action
+      # env['simpler.params'].merge!(route.params) if route
 
-      make_response(controller, action)
+      if route
+        controller = route.controller.new(env)
+        action = route.action
+      
+        make_response(controller, action)
+      else
+        page_not_found
+      end
     end
 
     private
+
+    def page_not_found
+      [404, {'Content-Type' => 'text/plain'}, ["Error number - 404 'Page Not Found'\n"]]
+    end
 
     def require_app
       Dir["#{Simpler.root}/app/**/*.rb"].each { |file| require file }
